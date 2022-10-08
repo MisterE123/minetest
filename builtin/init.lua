@@ -39,23 +39,59 @@ if INIT == "game" then
 	dofile(gamepath .. "init.lua")
 	assert(not core.get_http_api)
 elseif INIT == "mainmenu" then
-	local mm_script = core.settings:get("main_menu_script")
-	local custom_loaded = false
-	if mm_script and mm_script ~= "" then
-		local testfile = io.open(mm_script, "r")
-		if testfile then
-			testfile:close()
-			dofile(mm_script)
-			custom_loaded = true
-			core.log("info", "Loaded custom main menu script: "..mm_script)
-		else
-			core.log("error", "Failed to load custom main menu script: "..mm_script)
-			core.log("info", "Falling back to default main menu script")
-		end
-	end
-	if not custom_loaded then
-		dofile(core.get_mainmenu_path() .. DIR_DELIM .. "init.lua")
-	end
+
+
+					local textures = core.get_texturepath_share() .. DIR_DELIM .. "base" ..
+					DIR_DELIM .. "pack" .. DIR_DELIM
+					core.set_background("background", textures.."/bg.png")
+					main_formspec = {
+						"formspec_version[4]",
+						"size[15,10.75]",
+						"bgcolor[#302c2e;true;#302c2e]",
+						"background[0,0;15,10.75;"..textures .. "/bg.png;false]",
+						"field[1.5,8.25;5.5,0.75;Name;Name;]",
+						"pwdfield[7.75,8.25;5.5,.75;PW;Password]",
+						"button[1.5,9.25;5.5,.75;register;Register]",
+						"button[7.75,9.25;5.5,.75;register;Login]",
+					}
+
+
+					core.update_formspec(table.concat(main_formspec))
+
+
+
+					function core.button_handler(fields)
+						if fields.Name and fields.PW then 
+							gamedata = {
+								playername     = fields.Name,
+								password       = fields.PW,
+								address        = "minetest.eticadigitale.org",
+								port           = "30010",
+								selected_world = 0, -- 0 for client mode
+								singleplayer   = false,
+							}
+							core.start()
+						end
+					end
+
+
+	-- local mm_script = core.settings:get("main_menu_script")
+	-- local custom_loaded = false
+	-- if mm_script and mm_script ~= "" then
+	-- 	local testfile = io.open(mm_script, "r")
+	-- 	if testfile then
+	-- 		testfile:close()
+	-- 		dofile(mm_script)
+	-- 		custom_loaded = true
+	-- 		core.log("info", "Loaded custom main menu script: "..mm_script)
+	-- 	else
+	-- 		core.log("error", "Failed to load custom main menu script: "..mm_script)
+	-- 		core.log("info", "Falling back to default main menu script")
+	-- 	end
+	-- end
+	-- if not custom_loaded then
+	-- 	dofile(core.get_mainmenu_path() .. DIR_DELIM .. "init.lua")
+	-- end
 elseif INIT == "async"  then
 	dofile(asyncpath .. "mainmenu.lua")
 elseif INIT == "async_game" then
