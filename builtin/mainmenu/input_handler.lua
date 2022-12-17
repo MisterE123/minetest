@@ -3,6 +3,8 @@
 
 core.button_handler = function(fields)
 
+
+
     if menudata.page == "splashscreen" then
 
         if fields.SINGLEPLAYER then
@@ -105,6 +107,37 @@ core.button_handler = function(fields)
             core.start()
         end
 
+        -- go to create world page
+        if fields.NEW_WORLD then
+            menudata.create_world = true
+            pages.disp_menu()
+        end
+
+        -- go to create world page
+        if fields.EDIT_WORLD then
+            menudata.edit_world = true
+            pages.disp_menu()
+        end
+        
+
+        -- go to create world page
+        if fields.CANCEL_EDIT_WORLD then
+            menudata.create_world = false
+            menudata.edit_world = false
+            pages.disp_menu()
+        end
+
+
+    end
+
+
+    -- create world input
+    if menudata.page == "create_world" then
+        
+        if fields.BACK then
+            menudata.page = "singleplayer"
+            pages.disp_menu()
+        end
 
     end
 

@@ -11,11 +11,16 @@ end
 
 function pages.get_page(page)
 
-    -- intro page
+    -- save formspec to FORM, returned at the end of the function
 
+
+    local FORM = ""
+
+
+        -- intro page
     if page == "splashscreen" then
 
-        return table.concat({
+        FORM = table.concat({
             "formspec_version[6]",
             "size[5,11]",
             "no_prepend[]",
@@ -45,7 +50,7 @@ function pages.get_page(page)
         setup.fetch_menu_games()
 
         -- games bar formspec
-        local games_bar = get_games_bar_formspec(menudata.games,menudata.game_idx)
+        local games_bar = pages.get_games_bar_formspec(menudata.games,menudata.game_idx)
         -- data for game menu
         local game = menudata.games[menudata.game_idx]
         local game_screenshot = core.formspec_escape(game.path .. DIR_DELIM .. "screenshot.png")
@@ -66,9 +71,11 @@ function pages.get_page(page)
                 table.insert(game_worlds,world)
             end
         end
-        local world_list = get_worldlist_formspec(game_worlds,game_icon)
-        local play_button = get_play_button_formspec()
-        return table.concat({
+        local world_list = pages.get_worldlistarea_formspec(game_worlds,game_icon)
+        local play_button = pages.get_play_button_formspec()
+
+
+        FORM = table.concat({
 
             "formspec_version[6]",
             "size[32,18]",
@@ -87,8 +94,8 @@ function pages.get_page(page)
 
             "image_button[0,0;1,1;".. textures .."back.png;BACK;]", -- Back Button (to splashscreen)
 
-            "style_type[label;font_size=28,font=bold]",
-            "label[1.5,.5;Choose Game ... ]", -- Games Title
+            "style_type[label;font_size=*2,font=bold]",
+            "label[1.5,.5;Choose Game... ]", -- Games Title
 
             "button[28,0;4,1;CONTENT_GAMES;All Games]", -- all games button
             -- bg for game bar
@@ -117,10 +124,7 @@ function pages.get_page(page)
             "label[.6,9;by "..game_author.."]",
 
             -- World selector
-            "image[11,2;21,10;".. textures .."5a5353.png]", -- World selector bg
-            "image[11.2,3.2;20.6,8.6;".. textures .."302c2e.png]", -- World selector dark bg
-            "style_type[label;font_size=28,font=bold]",
-            "label[11.6,2.6;Select World...]",
+
 
             world_list,
             play_button,
@@ -129,12 +133,17 @@ function pages.get_page(page)
 
     end
 
+
+
+    -- return form
+    return FORM
+
 end
 
 
 
 
-function get_play_button_formspec()
+function pages.get_play_button_formspec()
 
     local fs = ""
     -- play button area
@@ -142,13 +151,19 @@ function get_play_button_formspec()
 
 
     fs = fs .. "style[PLAY;font_size=*2;textcolor=#302c2e;bgimg=".. textures .."71aa34.png;bgimg_pressed=".. textures .."71aa34.png;bgimg_hovered=".. textures .."b6d53c.png]"
+
+    fs = fs .. "style[FINISH_CREATE_WORLD;font_size=*2;textcolor=#302c2e;bgimg=".. textures .."71aa34.png;bgimg_pressed=".. textures .."71aa34.png;bgimg_hovered=".. textures .."b6d53c.png]"
+    fs = fs .. "style[CANCEL_EDIT_WORLD;font_size=*2;textcolor=#302c2e;bgimg=".. textures .."a93b3b.png;bgimg_pressed=".. textures .."a93b3b.png;bgimg_hovered=".. textures .."e6482e.png]"
+
     fs = fs .. "style[OPEN_HOST_MENU;font_size=*2;textcolor=#302c2e;bgimg=".. textures .."host_server.png;bgimg_pressed=".. textures .."host_server.png;bgimg_hovered=".. textures .."host_server_hovered.png]"
-    fs = fs .. "style[CLOSE_HOST_MENU;font_size=*2;textcolor=#302c2e;bgimg=".. textures .."host_server.png;bgimg_hovered=".. textures .."host_server_hovered.png]"
+    fs = fs .. "style[CLOSE_HOST_MENU;font_size=*2;textcolor=#302c2e;bgimg=".. textures .."host_server.png;bgimg_pressed=".. textures .."host_server.png;bgimg_hovered=".. textures .."host_server_hovered.png]"
     fs = fs .. "style[HELP_START_SERVER;bgimg=".. textures .."help_dark.png;bgimg_hovered=".. textures .."help_hovered.png;bgimg_pressed=".. textures .."help_pressed.png]"
 
-    -- fs = fs .. "style_type[button:hovered,button:hovered+pressed;textcolor=#302c2e]"
-
-    if menudata.host_server_collapsed == "true" then
+    if menudata.create_world == true or menudata.edit_world == true then
+        -- show create world buttons if in create world mode
+        fs = fs .. "button[11.2,12.7;10.3,2.1;CANCEL_EDIT_WORLD;CANCEL]"
+        fs = fs .. "button[21.5,12.7;10.3,2.1;FINISH_CREATE_WORLD;SAVE]"
+    elseif menudata.host_server_collapsed == "true" then
         -- hide server hosting stuff
         fs = fs .. "button[11.2,12.7;1,2.1;OPEN_HOST_MENU;>]"
         fs = fs .. "button[12.2,12.7;19.6,2.1;PLAY;PLAY]"
@@ -185,7 +200,7 @@ end
 
 
 
-function get_worldlist_formspec(worlds,game_icon)
+function pages.get_worldlistarea_formspec(worlds,game_icon)
     
     local entryheight = 2
     local selected_world_name = menudata.last_world_name
@@ -199,40 +214,80 @@ function get_worldlist_formspec(worlds,game_icon)
     local scroll_factor = .1
     local scroll_value = menudata.world_scrollbar_value or 0
 
+    fs = fs .. "image[11,2;21,10;".. textures .."5a5353.png]" -- World selector bg
+    fs = fs .. "image[11.2,3.2;20.6,8.6;".. textures .."302c2e.png]" -- World selector dark bg
 
-    fs = fs .. "scroll_container[18.2,3.2;13.8,"..container_len..";WORLD_SCROLLBAR;vertical;"..scroll_factor.."]"
-    for i,world in ipairs(worlds) do
-        local entry_y = (i-1)*entryheight
-        if world.name == selected_world_name then -- color the button dark green if the world is selected
-            fs = fs .. "style_type[button;bgimg=".. textures .."397b44.png;bgimg_pressed=".. textures .."397b44.png;bgimg_hovered=".. textures .."397b44.png;border=true]"
-        elseif toggle then
-            fs = fs .. "style_type[button;bgimg=".. bg_color_1 ..";bgimg_pressed=".. textures .."397b44.png;bgimg_hovered=".. textures .."71aa34.png;border=true]"
-        else
-            fs = fs .. "style_type[button;bgimg=".. bg_color_2 ..";bgimg_pressed=".. textures .."397b44.png;bgimg_hovered=".. textures .."71aa34.png;border=true]"
+    if menudata.create_world or menudata.edit_world then -- create / edit world menu instead of wrold list
+        if menudata.create_world then
+            -- title
+            fs = fs .. "style_type[label;font_size=*2,font=bold]"
+            fs = fs .. "label[11.6,2.6;Create World...]"
+
+            fs = fs .. "style_type[label;font_size=*.75;font=bold]"
+
+            -- player name
+            fs = fs .. "style[WORLD_NAME;border=false;font=bold]"
+            fs = fs .. "image[11.6,3.6;5,.7;".. textures .."5a5353.png]"
+            fs = fs .. "field[11.7,3.6;4.9,.7;WORLD_NAME;;]"  
+            fs = fs .. "label[11.7,4.6;World Name (Required)]"
+
+            fs = fs .. "style[WORLD_SEED;border=false;font=bold]"
+            fs = fs .. "image[11.6,5.1;5,.7;".. textures .."5a5353.png]"
+            fs = fs .. "field[11.7,5.1;4.9,.7;WORLD_SEED;;]"  
+            fs = fs .. "label[11.7,6.1;World_Seed]"
+
+            fs = fs .. "dropdown[11.7,6.6;<W>,<H>;<name>;<item 1>,<item 2>, ...,<item n>;<selected idx>;<index event>]"
+        
+        
+        else -- edit world menu
+            fs = fs .. "style_type[label;font_size=*2,font=bold]"
+            fs = fs .. "label[11.6,2.6;Edit World...]"
         end
-        fs = fs .. "style_type[button:hovered,button:hovered+pressed;textcolor=#302c2e]"
-        fs = fs .. "button[0,"..entry_y..";13.5,"..entryheight..";SELECT_WORLD_"..world.name..";]" -- select world buttons
+
+        -- add in mod list
+
+
+    else -- normal worldlist
+
+        fs = fs .. "style_type[label;font_size=*2,font=bold]"
+        fs = fs .. "label[11.6,2.6;Select World...]"
+
+        -- TODO: add in world information and an edit button!
+
+        fs = fs .. "scroll_container[18.2,3.2;13.8,"..container_len..";WORLD_SCROLLBAR;vertical;"..scroll_factor.."]"
+        for i,world in ipairs(worlds) do
+            local entry_y = (i-1)*entryheight
+            if world.name == selected_world_name then -- color the button dark green if the world is selected
+                fs = fs .. "style_type[button;bgimg=".. textures .."397b44.png;bgimg_pressed=".. textures .."397b44.png;bgimg_hovered=".. textures .."397b44.png;border=true]"
+            elseif toggle then
+                fs = fs .. "style_type[button;bgimg=".. bg_color_1 ..";bgimg_pressed=".. textures .."397b44.png;bgimg_hovered=".. textures .."71aa34.png;border=true]"
+            else
+                fs = fs .. "style_type[button;bgimg=".. bg_color_2 ..";bgimg_pressed=".. textures .."397b44.png;bgimg_hovered=".. textures .."71aa34.png;border=true]"
+            end
+            fs = fs .. "style_type[button:hovered,button:hovered+pressed;textcolor=#302c2e]"
+            fs = fs .. "button[0,"..entry_y..";13.5,"..entryheight..";SELECT_WORLD_"..world.name..";]" -- select world buttons
+            
+            fs = fs .. "image["..(3.5-entryheight)/2 ..","..entry_y..";"..entryheight..","..entryheight..";"..game_icon..";]" -- TODO: replace with actual world screenshot!
+            fs = fs .. "image[0,"..entry_y..";3.5,"..entryheight..";no_screenshot.png;]" -- TODO: replace with actual world screenshot, shrink icon above!
+            
+            fs = fs .."style_type[label;font_size=23;font=bold]"
+            fs = fs .. "label[4,"..entry_y+.5 ..";".. world.name .."]"
+
+            toggle = not(toggle)
+        end
         
-        fs = fs .. "image["..(3.5-entryheight)/2 ..","..entry_y..";"..entryheight..","..entryheight..";"..game_icon..";]" -- TODO: replace with actual world screenshot!
-        fs = fs .. "image[0,"..entry_y..";3.5,"..entryheight..";no_screenshot.png;]" -- TODO: replace with actual world screenshot, shrink icon above!
-        
-        fs = fs .."style_type[label;font_size=23;font=bold]"
-        fs = fs .. "label[4,"..entry_y+.5 ..";".. world.name .."]"
 
-        toggle = not(toggle)
-    end
-    
-
-    worlds = worlds or {}
-    local entry_y = (#worlds)*entryheight
-    fs = fs .. "style_type[button;font=bold;font_size=52;bgimg=".. textures .."302c2e.png;bgimg_pressed=".. textures .."397b44.png;bgimg_hovered=".. textures .."71aa34.png;border=true]"
-    fs = fs .. "button[0,"..entry_y..";13.5,"..entryheight..";NEW_WORLD;+]" -- New world button at end of list
+        worlds = worlds or {}
+        local entry_y = (#worlds)*entryheight
+        fs = fs .. "style_type[button;font=bold;font_size=52;bgimg=".. textures .."302c2e.png;bgimg_pressed=".. textures .."397b44.png;bgimg_hovered=".. textures .."71aa34.png;border=true]"
+        fs = fs .. "button[0,"..entry_y..";13.5,"..entryheight..";NEW_WORLD;+]" -- New world button at end of list
 
 
-    fs = fs .. "scroll_container_end[]"
-    if total_l > container_len then    
-        fs = fs .. menu_api.make_scrollbaroptions_for_scroll_container(container_len, total_l, scroll_factor,"hide")
-        fs = fs .. "scrollbar[31.7,3.2;.1,"..container_len..";vertical;WORLD_SCROLLBAR;"..scroll_value.."]"
+        fs = fs .. "scroll_container_end[]"
+        if total_l > container_len then    
+            fs = fs .. menu_api.make_scrollbaroptions_for_scroll_container(container_len, total_l, scroll_factor,"hide")
+            fs = fs .. "scrollbar[31.7,3.2;.1,"..container_len..";vertical;WORLD_SCROLLBAR;"..scroll_value.."]"
+        end
     end
 
     return fs
@@ -246,7 +301,7 @@ end
 
 
 
-function get_games_bar_formspec(games_list, current_index)
+function pages.get_games_bar_formspec(games_list, current_index)
     local bar_x = 0
     local bar_y = 15.5
     local bar_w = 32

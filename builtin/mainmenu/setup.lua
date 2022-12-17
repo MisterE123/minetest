@@ -6,7 +6,7 @@ menudata = {}
 
 function setup.fetch_menu_games()
     menudata.games = core.get_games()
-    menudata.game_idx = menudata.game_idx or tonumber(core.settings:get("menu_last_game")) or 1
+    menudata.game_idx = menudata.game_idx or tonumber(core.settings:get("menu_last_game_idx")) or 1
     -- check that game exists
     if not(menudata.games[menudata.game_idx]) then
         menudata.game_idx = 1
