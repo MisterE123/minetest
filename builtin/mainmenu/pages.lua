@@ -133,12 +133,40 @@ function pages.get_page(page)
 
     end
 
-
+    if menudata.error then
+        FORM = table.concat({
+            "formspec_version[6]",
+            "size[9,11]",
+            "no_prepend[]",
+            "real_coordinates[true]",
+            "style_type[button;textcolor=#a0938e;bgimg=".. textures .."302c2e.png;bgimg_pressed=".. textures .."397b44.png;bgimg_hovered=".. textures .."71aa34.png;border=true]",
+            "style_type[button:hovered,button:pressed;textcolor=#302c2e]",
+            "style[TITLE;textcolor=#302c2e;border=false]",
+            "bgcolor[#5a5353;both;#302c2e]",
+            "image[4,1;1,1;".. textures .."minetesticon.png]",
+            "image_button[.25,2.5;8.5,1;".. textures .."5a5353.png;TITLE;Error]",
+            "image[.5,4.5;8,4;".. textures .."302c2e.png]",
+            "textarea[.6,4.6;7.8,3.8;;;"..menudata.error.."]",
+            "button[.5,9.5;8,1;ERROR_OK;OK]",
+        })
+    end
 
     -- return form
     return FORM
 
 end
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -152,7 +180,7 @@ function pages.get_play_button_formspec()
 
     fs = fs .. "style[PLAY;font_size=*2;textcolor=#302c2e;bgimg=".. textures .."71aa34.png;bgimg_pressed=".. textures .."71aa34.png;bgimg_hovered=".. textures .."b6d53c.png]"
 
-    fs = fs .. "style[FINISH_CREATE_WORLD;font_size=*2;textcolor=#302c2e;bgimg=".. textures .."71aa34.png;bgimg_pressed=".. textures .."71aa34.png;bgimg_hovered=".. textures .."b6d53c.png]"
+    fs = fs .. "style[FINISH_EDIT_WORLD;font_size=*2;textcolor=#302c2e;bgimg=".. textures .."71aa34.png;bgimg_pressed=".. textures .."71aa34.png;bgimg_hovered=".. textures .."b6d53c.png]"
     fs = fs .. "style[CANCEL_EDIT_WORLD;font_size=*2;textcolor=#302c2e;bgimg=".. textures .."a93b3b.png;bgimg_pressed=".. textures .."a93b3b.png;bgimg_hovered=".. textures .."e6482e.png]"
 
     fs = fs .. "style[OPEN_HOST_MENU;font_size=*2;textcolor=#302c2e;bgimg=".. textures .."host_server.png;bgimg_pressed=".. textures .."host_server.png;bgimg_hovered=".. textures .."host_server_hovered.png]"
@@ -162,7 +190,7 @@ function pages.get_play_button_formspec()
     if menudata.create_world == true or menudata.edit_world == true then
         -- show create world buttons if in create world mode
         fs = fs .. "button[11.2,12.7;10.3,2.1;CANCEL_EDIT_WORLD;CANCEL]"
-        fs = fs .. "button[21.5,12.7;10.3,2.1;FINISH_CREATE_WORLD;SAVE]"
+        fs = fs .. "button[21.5,12.7;10.3,2.1;FINISH_EDIT_WORLD;SAVE]"
     elseif menudata.host_server_collapsed == "true" then
         -- hide server hosting stuff
         fs = fs .. "button[11.2,12.7;1,2.1;OPEN_HOST_MENU;>]"
@@ -200,6 +228,23 @@ end
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function pages.get_worldlistarea_formspec(worlds,game_icon)
     
     local entryheight = 2
@@ -217,15 +262,25 @@ function pages.get_worldlistarea_formspec(worlds,game_icon)
     fs = fs .. "image[11,2;21,10;".. textures .."5a5353.png]" -- World selector bg
     fs = fs .. "image[11.2,3.2;20.6,8.6;".. textures .."302c2e.png]" -- World selector dark bg
 
-    if menudata.create_world or menudata.edit_world then -- create / edit world menu instead of wrold list
+    if menudata.create_world or menudata.edit_world then -- create / edit world menu instead of world list, inludes list of mods in place of list of worlds
+
+        
         if menudata.create_world then
+
+
+            -- data for create world
+            local game = core.get_game(menudata.game_idx)
+            local game_settings = Settings(game.path..DIR_DELIM.."game.conf")
+            local mapgens,disallowed_mapgen_settings = menu_api.get_game_mapgen_params(game)
+            local selected_mapgen_idx = 1
+
             -- title
             fs = fs .. "style_type[label;font_size=*2,font=bold]"
             fs = fs .. "label[11.6,2.6;Create World...]"
 
             fs = fs .. "style_type[label;font_size=*.75;font=bold]"
 
-            -- player name
+            -- world name
             fs = fs .. "style[WORLD_NAME;border=false;font=bold]"
             fs = fs .. "image[11.6,3.6;5,.7;".. textures .."5a5353.png]"
             fs = fs .. "field[11.7,3.6;4.9,.7;WORLD_NAME;;]"  
@@ -234,14 +289,25 @@ function pages.get_worldlistarea_formspec(worlds,game_icon)
             fs = fs .. "style[WORLD_SEED;border=false;font=bold]"
             fs = fs .. "image[11.6,5.1;5,.7;".. textures .."5a5353.png]"
             fs = fs .. "field[11.7,5.1;4.9,.7;WORLD_SEED;;]"  
-            fs = fs .. "label[11.7,6.1;World_Seed]"
+            fs = fs .. "label[11.7,6.1;World Seed]"
 
-            fs = fs .. "dropdown[11.7,6.6;<W>,<H>;<name>;<item 1>,<item 2>, ...,<item n>;<selected idx>;<index event>]"
+            
+            fs = fs .. "dropdown[11.6,6.6;5,.7;MAPGEN_NAME;"..table.concat(mapgens,",")..";"..selected_mapgen_idx..";false]"
+            fs = fs .. "label[11.7,7.6;Mapgen]"
+
+
         
         
         else -- edit world menu
+
+
+
             fs = fs .. "style_type[label;font_size=*2,font=bold]"
             fs = fs .. "label[11.6,2.6;Edit World...]"
+
+
+
+
         end
 
         -- add in mod list
@@ -254,6 +320,7 @@ function pages.get_worldlistarea_formspec(worlds,game_icon)
 
         -- TODO: add in world information and an edit button!
 
+        
         fs = fs .. "scroll_container[18.2,3.2;13.8,"..container_len..";WORLD_SCROLLBAR;vertical;"..scroll_factor.."]"
         for i,world in ipairs(worlds) do
             local entry_y = (i-1)*entryheight
@@ -288,10 +355,30 @@ function pages.get_worldlistarea_formspec(worlds,game_icon)
             fs = fs .. menu_api.make_scrollbaroptions_for_scroll_container(container_len, total_l, scroll_factor,"hide")
             fs = fs .. "scrollbar[31.7,3.2;.1,"..container_len..";vertical;WORLD_SCROLLBAR;"..scroll_value.."]"
         end
+
+
+
     end
 
     return fs
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

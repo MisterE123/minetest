@@ -3,7 +3,10 @@
 
 core.button_handler = function(fields)
 
-
+    if fields.ERROR_OK then
+        menudata.error = nil
+        pages.disp_menu()
+    end
 
     if menudata.page == "splashscreen" then
 
@@ -110,6 +113,7 @@ core.button_handler = function(fields)
         -- go to create world page
         if fields.NEW_WORLD then
             menudata.create_world = true
+            menudata.editworlddata = {}
             pages.disp_menu()
         end
 
@@ -124,6 +128,48 @@ core.button_handler = function(fields)
         if fields.CANCEL_EDIT_WORLD then
             menudata.create_world = false
             menudata.edit_world = false
+            menudata.editworlddata = nil
+            pages.disp_menu()
+        end
+
+        if fields.WORLD_NAME then
+            menudata.editworlddata.worldname = fields.WORLD_NAME
+        end
+
+        if fields.WORLD_SEED then
+            menudata.editworlddata.worldseed = fields.WORLD_SEED
+        end
+
+        if fields.MAPGEN_NAME then
+            menudata.editworlddata.mapgen_name = fields.MAPGEN_NAME
+        end
+
+        if fields.FINISH_EDIT_WORLD then
+            if fields.WORLD_NAME ~= "" then 
+                -- TODO: allow users to set params per-world
+                local settings = {
+                    fixed_map_seed = menudata.editworlddata.worldseed or math.random(1,999999),
+                    mg_name = menudata.editworlddata.mapgen_name,
+                    mg_flags = menu_api.table_to_flags(core.settings:get_flags("mg_flags")),
+                    mgv5_spflags = menu_api.table_to_flags(core.settings:get_flags("mgv5_spflags")),
+                    mgv6_spflags = menu_api.table_to_flags(core.settings:get_flags("mgv6_spflags")),
+                    mgv7_spflags = menu_api.table_to_flags(core.settings:get_flags("mgv7_spflags")),
+                    mgfractal_spflags = menu_api.table_to_flags(core.settings:get_flags("mgfractal_spflags")),
+                    mgcarpathian_spflags = menu_api.table_to_flags(core.settings:get_flags("mgcarpathian_spflags")),
+                    mgvalleys_spflags = menu_api.table_to_flags(core.settings:get_flags("mgvalleys_spflags")),
+                    mgflat_spflags = menu_api.table_to_flags(core.settings:get_flags("mgflat_spflags")),
+                }
+                local game = core.get_game(menudata.game_idx)
+                local game_id = tonumber(game.id)
+                menudata.error = core.create_world(menudata.editworlddata.worldname, menudata.game_idx , settings)
+            else
+                menudata.error = "Please enter a world name"
+            end
+            if menudata.error == nil then
+                menudata.create_world = false
+                menudata.edit_world = false
+                menudata.editworlddata = nil
+            end
             pages.disp_menu()
         end
 
